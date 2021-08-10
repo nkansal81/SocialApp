@@ -6,7 +6,7 @@ import '../chat.css';
 class Chat extends Component {
   constructor(props) {
     super(props);
-    this.socket = io.connect('http://54.237.158.65:5000');
+    this.socket = io.connect('http://codeial.codingninjas.com:5000');
     this.userEmail = null;
     this.state = {
       messages: [],
