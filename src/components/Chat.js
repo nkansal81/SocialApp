@@ -1,73 +1,73 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import io from 'socket.io-client';
-import '../chat.css';
+import React, { Component } from "react";
+import io from "socket.io-client";
+import { connect } from "react-redux";
+import "../chat.css";
 
 class Chat extends Component {
   constructor(props) {
     super(props);
-    this.socket = io.connect('http://codeial.codingninjas.com:5000');
-    this.userEmail = null;
-    this.state = {
-      messages: [],
-      typedMessage: '',
-    };
-  }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.user !== this.props.user) {
-      this.userEmail = this.props.user.email;
+    this.state = {
+      messages: [], // {content: 'some message', self: true}
+      typedMessage: "",
+    };
+    this.socket = io.connect('http://codeial.codingninjas.com:5000');
+    this.userEmail = props.user.email;
+
+    if (this.userEmail) {
       this.setupConnections();
     }
   }
 
   setupConnections = () => {
-    const context = this;
+    const socketConnection = this.socket;
+    const self = this;
 
-    if (this.userEmail) {
-      this.socket.on('connect', function () {
-        console.log('connection established using sockets...!');
+    this.socket.on("connect", function () {
+      console.log("CONNECTION ESTABLISHED");
 
-        context.socket.emit('join_room', {
-          user_email: this.userEmail,
-          chatroom: 'codeial',
-        });
-
-        context.socket.on('user_joined', function (data) {
-          console.log('a user joined!', data);
-        });
+      socketConnection.emit("join_room", {
+        user_email: this.userEmail,
+        chatroom: "codeial",
       });
 
-      this.socket.on('receive_message', function (data) {
-        const { messages } = context.state;
-        const messageObject = {};
-        messageObject.content = data.message;
-
-        if (data.user_email === context.userEmail) {
-          messageObject.self = true;
-        }
-
-        context.setState({
-          messages: [...messages, messageObject],
-          typedMessage: '',
-        });
+      socketConnection.on("user_joined", function (data) {
+        console.log("NE USER JOINED", data);
       });
-    }
+    });
+
+    this.socket.on("receive_message", function (data) {
+      // add message to state
+      const { messages } = self.state;
+      const messageObject = {};
+      messageObject.content = data.message;
+
+      if (data.user_email === self.userEmail) {
+        messageObject.self = true;
+      }
+
+      self.setState({
+        messages: [...messages, messageObject],
+        typedMessage: "",
+      });
+    });
   };
 
   handleSubmit = () => {
     const { typedMessage } = this.state;
+
     if (typedMessage && this.userEmail) {
-      this.socket.emit('send_message', {
+      this.socket.emit("send_message", {
         message: typedMessage,
         user_email: this.userEmail,
-        chatroom: 'codeial',
+        chatroom: "codeial",
       });
     }
   };
 
   render() {
-    const { messages, typedMessage } = this.state;
+    const { typedMessage, messages } = this.state;
+
     return (
       <div className="chat-container">
         <div className="chat-header">
@@ -78,14 +78,13 @@ class Chat extends Component {
             height={17}
           />
         </div>
-
         <div className="chat-messages">
           {messages.map((message) => (
             <div
               className={
                 message.self
-                  ? 'chat-bubble self-chat'
-                  : 'chat-bubble other-chat'
+                  ? "chat-bubble self-chat"
+                  : "chat-bubble other-chat"
               }
             >
               {message.content}
